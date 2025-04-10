@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime, timedelta
 from intake.source.base import DataSource
+from intake.catalog.utils import coerce_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class ZarrForecastSource(DataSource):
         metadata=None,
     ):
         super().__init__(metadata=metadata)
-        self.cycle = find_previous_cycle_time(cycle, cycle_period)
+        self.cycle = find_previous_cycle_time(coerce_datetime(cycle), cycle_period)
         self.cycle_period = cycle_period
         self.maxstepback = maxstepback
         self.open_zarr_kwargs = open_zarr_kwargs
