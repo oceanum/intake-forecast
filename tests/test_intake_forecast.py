@@ -203,7 +203,7 @@ def test_zarr_forecast_source_stepback_limit():
     
     # This should raise a ValueError because we can't step back far enough
     with pytest.raises(ValueError) as excinfo:
-        ds = source.to_dask()
+        source.to_dask()
     
     # Check that the error message contains the expected text
     assert "not found and maxstepback" in str(excinfo.value)
