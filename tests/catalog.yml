@@ -1,0 +1,28 @@
+metadata:
+  version: 1 
+sources:
+
+  test_cyclic_forecast:
+    description: Test cyclic forecast
+    metadata:
+      name: Test cyclic forecast
+      tags:
+        - test
+        - cyclic
+        - forecast
+    driver: zarr_forecast
+    args:
+      # urlpath: gs://oceanum-prod-flush-1m/swan/gfs_caboverde/parent/post/grid/par5km-grid-%Y%m%dT%H.zarr
+      urlpath: file:///source/intake-forecast/tests/test_%Y%m%dT%H.zarr
+      cycle: "{{cycle}}"
+      maxstepback: "{{maxstepback}}"
+      cycle_period: 6
+    parameters:
+      cycle:
+        description: model cycle
+        type: datetime
+        default: today
+      maxstepback:
+        description: maximum cycle stepback allowed
+        type: int
+        default: 4
