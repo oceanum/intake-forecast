@@ -12,8 +12,7 @@ sources:
         - forecast
     driver: zarr_forecast
     args:
-      # urlpath: gs://oceanum-prod-flush-1m/swan/gfs_caboverde/parent/post/grid/par5km-grid-%Y%m%dT%H.zarr
-      urlpath: file:///source/intake-forecast/tests/test_%Y%m%dT%H.zarr
+      urlpath: "file://{{CATALOG_DIR}}/test_%Y%m%dT%H.zarr"
       cycle: "{{cycle}}"
       maxstepback: "{{maxstepback}}"
       cycle_period: 6
