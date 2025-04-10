@@ -17,7 +17,11 @@ classifiers = [
 ]
 license = {text = "Not open source"}
 dependencies = [
-  "typer"
+  "dask",
+  "gcsfs",
+  "intake",
+  "typer",
+  "zarr",
 ]
 dynamic = ["version"]
 
@@ -44,8 +48,11 @@ package-dir = {"" = "src"}
 [tool.setuptools.package-data]
 "*" = ["*.*"]
 
+[project.entry-points."intake.drivers"]
+"zarr_forecast" = "intake_forecast.source:ZarrForecastSource"
 
-
+[tool.setuptools.dynamic]
+version = {attr = "intake_forecast.__version__"}
 
 # Mypy
 # ----
