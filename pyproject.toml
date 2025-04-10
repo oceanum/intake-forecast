@@ -21,6 +21,7 @@ dependencies = [
   "gcsfs",
   "intake",
   "typer",
+  "xarray",
   "zarr",
 ]
 dynamic = ["version"]
