@@ -1,28 +1,14 @@
 """Intake driver for cycle-based, zarr-based forecast data."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from intake.source.base import DataSource
 from intake.catalog.utils import coerce_datetime
 
+from intake_forecast.utils import find_previous_cycle_time
+
+
 logger = logging.getLogger(__name__)
-
-
-def find_previous_cycle_time(time: datetime, cycle_period_hours: int) -> datetime:
-    """Find the previous time in a cycle given the current time.
-
-    Args:
-        time (datetime): The current time
-        cycle_period_hours (int): The cycle period in hours
-
-    Returns:
-        datetime: The previous time in the cycle
-
-    """
-    midnight = time.replace(hour=0, minute=0, second=0, microsecond=0)
-    hours_passed = (time - midnight).total_seconds() / 3600
-    cycles_passed = int(hours_passed / cycle_period_hours)
-    return midnight + timedelta(hours=cycles_passed * cycle_period_hours)
 
 
 class ZarrForecastSource(DataSource):
