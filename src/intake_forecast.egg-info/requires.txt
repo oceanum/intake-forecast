@@ -1,0 +1,10 @@
+typer
+
+[dev]
+coverage
+mypy
+pytest
+ruff
+sphinx
+tox
+twine

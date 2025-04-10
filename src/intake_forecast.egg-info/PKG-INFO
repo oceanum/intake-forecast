@@ -1,0 +1,48 @@
+Metadata-Version: 2.4
+Name: intake_forecast
+Version: 0.0.0
+Summary: Intake driver for cyclic zarr sources
+Author-email: Oceanum Developers <developers@oceanum.science>
+Maintainer-email: Oceanum Developers <developers@oceanum.science>
+License: Not open source
+Project-URL: bugs, https://github.com/oceanum/intake_forecast/issues
+Project-URL: changelog, https://github.com/oceanum/intake_forecast/blob/master/changelog.md
+Project-URL: homepage, https://github.com/oceanum/intake_forecast
+Description-Content-Type: text/x-rst
+License-File: AUTHORS.rst
+Requires-Dist: typer
+Provides-Extra: dev
+Requires-Dist: coverage; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: sphinx; extra == "dev"
+Requires-Dist: tox; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Dynamic: license-file
+
+===============
+intake-forecast
+===============
+
+
+
+
+
+
+Intake driver for cyclic zarr sources
+
+
+
+Features
+--------
+
+* TODO
+
+Credits
+-------
+
+This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
