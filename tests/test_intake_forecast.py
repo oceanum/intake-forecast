@@ -318,6 +318,21 @@ def test_catalog_enhanced():
     assert dset["v10"].attrs["units"] == "kts"
 
 
+def test_zarr_forecast_source_with_legacy_options():
+    """Test ZarrForecastSource with legacy options."""
+    # Test with legacy options
+    source = ZarrForecastSource(
+        urlpath=f"file:///{HERE}/test_%Y%m%dT%H.zarr",
+        cycle=datetime(2025, 4, 1, 0),
+        storage_options={"token": None},
+        consolidated=True,
+    )
+    ds = source.to_dask()
+    assert source.open_zarr_kwargs["storage_options"] == {"token": None}
+    assert source.open_zarr_kwargs["consolidated"] is True
+    assert isinstance(ds, xr.Dataset)
+
+
 def teardown_module(module):
     """Clean up after tests."""
     shutil.rmtree(TEST_ZARR_PATH)

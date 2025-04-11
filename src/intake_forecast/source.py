@@ -1,7 +1,6 @@
-"""Intake driver for cycle-based, zarr-based forecast data."""
-
 import logging
-from datetime import timedelta
+from typing import Optional
+from datetime import datetime, timedelta
 from intake.source.base import DataSource
 from intake_xarray.xzarr import ZarrSource
 from intake.catalog.utils import coerce_datetime
@@ -17,13 +16,39 @@ class ZarrForecastSource(DataSource):
 
     def __init__(
         self,
-        urlpath,
-        cycle,
-        cycle_period=6,
-        maxstepback=4,
-        open_zarr_kwargs={"storage_options": {"token": None}},
-        metadata=None,
+        urlpath: str,
+        cycle: datetime,
+        cycle_period: int = 6,
+        maxstepback: int = 4,
+        open_zarr_kwargs: dict = {"storage_options": {"token": None}},
+        storage_options: Optional[dict] = None,
+        consolidated: Optional[bool] = None,
+        metadata: dict = None,
     ):
+        """Intake driver for cyclic zarr sources.
+
+        Parameters
+        ----------
+        urlpath : str
+            URL path template for zarr files
+        cycle : datetime
+            Cycle time
+        cycle_period : int
+            Cycle period in hours, it should be a positive factor of 24
+        maxstepback : int
+            Maximum number of cycles to step back when searching for past cycles
+        open_zarr_kwargs : dict
+            Keyword arguments for opening zarr files with xarray.open_zarr
+        storage_options : Optional[dict], deprecated
+            Legacy parameter for storage options for opening zarr files with
+            xarray.open_zarr, it should now be provided in open_zarr_kwargs
+        consolidated : Optional[bool], deprecated
+            Legacy parameter for opening consolidated zarr files with
+            xarray.open_zarr, it should now be provided in open_zarr_kwargs
+        metadata : dict
+            Metadata for the dataset
+
+        """
         super().__init__(metadata=metadata)
         self.cycle = find_previous_cycle_time(coerce_datetime(cycle), cycle_period)
         self.cycle_period = cycle_period
@@ -31,6 +56,11 @@ class ZarrForecastSource(DataSource):
         self.open_zarr_kwargs = open_zarr_kwargs
         self._template = urlpath
         self._stepback = maxstepback
+        # For backward compatibility with the old onzarr driver
+        if storage_options is not None:
+            self.open_zarr_kwargs["storage_options"] = storage_options
+        if consolidated is not None:
+            self.open_zarr_kwargs["consolidated"] = consolidated
 
     def to_dask(self):
         import xarray as xr
@@ -59,8 +89,16 @@ class ZarrForecastSource(DataSource):
 class EnhancedZarrSource(ZarrSource):
     name = "zarr_enhanced"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        """Zarr source with additional functionality specified from the metadata.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments for the ZarrSource constructor
+
+        """
+        super().__init__(**kwargs)
         self.metadata = self.reader.metadata
 
     def to_dask(self):
