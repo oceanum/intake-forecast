@@ -3,9 +3,10 @@
 import logging
 from datetime import timedelta
 from intake.source.base import DataSource
+from intake_xarray.xzarr import ZarrSource
 from intake.catalog.utils import coerce_datetime
 
-from intake_forecast.utils import find_previous_cycle_time
+from intake_forecast.utils import find_previous_cycle_time, enhance
 
 
 logger = logging.getLogger(__name__)
@@ -53,3 +54,15 @@ class ZarrForecastSource(DataSource):
     discover = read
 
     read_chunked = to_dask
+
+
+class EnhancedZarrSource(ZarrSource):
+    name = "zarr_enhanced"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.metadata = self.reader.metadata
+
+    def to_dask(self):
+        ds = super().to_dask()
+        return enhance(ds, self.metadata)
