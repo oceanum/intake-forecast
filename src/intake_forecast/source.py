@@ -47,7 +47,7 @@ class ZarrForecastSource(DataSource):
             self.cycle -= timedelta(hours=self.cycle_period)
             self._stepback -= 1
             ds = self.to_dask()
-        return ds
+        return enhance(ds, self.metadata)
 
     read = to_dask
 

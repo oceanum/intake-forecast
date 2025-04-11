@@ -10,6 +10,9 @@ sources:
         - test
         - cyclic
         - forecast
+      variable_aliases:
+        u10: ugrd
+        v10: vgrd
     driver: zarr_forecast
     args:
       urlpath: "file://{{CATALOG_DIR}}/test_%Y%m%dT%H.zarr"

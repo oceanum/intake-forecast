@@ -295,9 +295,10 @@ def test_catalog_cyclic_forecast():
     """Test loading from catalog."""
     cat = intake.open_catalog(HERE / "catalog.yml")
     dset = cat.test_cyclic_forecast(cycle="2025-04-01T00").to_dask()
-    assert isinstance(dset, xr.Dataset)
     assert "u10" in dset.data_vars
     assert "v10" in dset.data_vars
+    assert "ugrd" in dset.data_vars
+    assert "vgrd" in dset.data_vars
 
 
 def test_catalog_enhanced():
