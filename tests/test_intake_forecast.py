@@ -6,7 +6,6 @@ import xarray as xr
 from datetime import datetime, timedelta
 import shutil
 
-from intake_forecast.utils import enhance
 from intake_forecast.source import (
     ZarrForecastSource,
     EnhancedZarrSource,

@@ -3,10 +3,8 @@ from importlib import import_module
 from pandas import DataFrame
 from xarray import Dataset
 from datetime import datetime, timedelta
-from functools import wraps
 from pint import UnitRegistry
 
-from intake.catalog.utils import coerce_datetime
 
 
 logger = logging.getLogger(__name__)
@@ -62,10 +60,10 @@ def add_derived(dset, md):
 
 def adjust_to_utc(dset, md):
     if "utcoffset" in md:
-        logger.info(f" --Adjusting to UTC")
+        logger.info(" --Adjusting to UTC")
         try:
             dset.index += timedelta(hours=md["utcoffset"])
-        except Exception as e:
+        except Exception:
             dset["time"] = dset.time.to_index() + timedelta(hours=md["utcoffset"])
     return dset
 
