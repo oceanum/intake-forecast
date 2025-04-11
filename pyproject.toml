@@ -35,6 +35,7 @@ dependencies = [
   "typer",
   "xarray",
   "zarr",
+  "pint",
 ]
 dynamic = ["version"]
 
@@ -63,6 +64,8 @@ package-dir = {"" = "src"}
 
 [project.entry-points."intake.drivers"]
 "zarr_forecast" = "intake_forecast.source:ZarrForecastSource"
+"zarr_enhanced" = "intake_forecast.source:EnhancedZarrSource"
+"onzarr" = "intake_forecast.source:EnhancedZarrSource" # Support legacy onzarr
 
 [tool.setuptools.dynamic]
 version = {attr = "intake_forecast.__version__"}
