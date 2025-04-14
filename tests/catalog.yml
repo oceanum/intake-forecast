@@ -78,7 +78,7 @@ sources:
         - name: wndsp
           input_variables: [ugrd10m, vgrd10m]
           function: intake_forecast.functions.speed
-    driver: ncdap_enhanced
+    driver: ncdap_forecast
     args:
       urlpath: "https://nomads.ncep.noaa.gov/dods/gfs_0p50/gfs%Y%m%d/gfs_0p50_%Hz"
       maxstepback: "{{maxstepback}}"
