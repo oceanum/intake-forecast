@@ -3,7 +3,7 @@ import pytest
 import intake
 import numpy as np
 import xarray as xr
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import shutil
 
 from intake_forecast.source import (
@@ -337,7 +337,9 @@ def test_zarr_forecast_source_with_legacy_options():
 
 
 def test_ncdap(cat):
-    cycle = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    cycle = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0, tzinfo=None
+    )
     dset = cat["gfs_glob05"](cycle=cycle).to_dask()
     assert "ugrd10m" in dset.data_vars
     assert "vgrd10m" in dset.data_vars

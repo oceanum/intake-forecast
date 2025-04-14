@@ -11,8 +11,8 @@ from intake_forecast.utils import find_previous_cycle_time, enhance
 logger = logging.getLogger(__name__)
 
 
-class ZarrForecastSource(DataSource):
-    name = "zarr_forecast"
+class ForecastSource(DataSource):
+    name = "forecast"
 
     def __init__(
         self,
@@ -20,9 +20,7 @@ class ZarrForecastSource(DataSource):
         cycle: datetime,
         cycle_period: int = 6,
         maxstepback: int = 4,
-        xarray_kwargs: dict = {"storage_options": {"token": None}},
-        storage_options: Optional[dict] = None,
-        consolidated: Optional[bool] = None,
+        xarray_kwargs: dict = {},
         metadata: dict = None,
     ):
         """Intake driver for cyclic zarr sources.
@@ -39,12 +37,6 @@ class ZarrForecastSource(DataSource):
             Maximum number of cycles to step back when searching for past cycles
         xarray_kwargs : dict
             Keyword arguments for opening zarr files with xarray.open_zarr
-        storage_options : Optional[dict], deprecated
-            Legacy parameter for storage options for opening zarr files with
-            xarray.open_zarr, it should now be provided in xarray_kwargs
-        consolidated : Optional[bool], deprecated
-            Legacy parameter for opening consolidated zarr files with
-            xarray.open_zarr, it should now be provided in xarray_kwargs
         metadata : dict
             Metadata for the dataset
 
@@ -56,11 +48,6 @@ class ZarrForecastSource(DataSource):
         self.xarray_kwargs = xarray_kwargs
         self._template = urlpath
         self._stepback = maxstepback
-        # For backward compatibility with the old onzarr driver
-        if storage_options is not None:
-            self.xarray_kwargs["storage_options"] = storage_options
-        if consolidated is not None:
-            self.xarray_kwargs["consolidated"] = consolidated
 
     @property
     def kwargs(self):
@@ -69,13 +56,13 @@ class ZarrForecastSource(DataSource):
     @property
     def reader(self):
         import xarray as xr
-        return xr.open_zarr
+        return xr.open_dataset
 
     def to_dask(self):
         urlpath = self.cycle.strftime(self._template)
         try:
             ds = self.reader(urlpath, **self.kwargs)
-        except FileNotFoundError as err:
+        except (FileNotFoundError, OSError) as err:
             if self._stepback == 0:
                 raise ValueError(
                     f"{urlpath} not found and maxstepback {self.maxstepback} reached"
@@ -91,6 +78,40 @@ class ZarrForecastSource(DataSource):
     discover = read
 
     read_chunked = to_dask
+
+
+class ZarrForecastSource(ForecastSource):
+    name = "zarr_forecast"
+
+    def __init__(
+        self,
+        storage_options: Optional[dict] = None,
+        consolidated: Optional[bool] = None,
+        **kwargs
+    ):
+        """Intake driver for cyclic zarr sources.
+
+        Parameters
+        ----------
+        storage_options : Optional[dict], deprecated
+            Legacy parameter for storage options for opening zarr files with
+            xarray.open_zarr, it should now be provided in xarray_kwargs
+        consolidated : Optional[bool], deprecated
+            Legacy parameter for opening consolidated zarr files with
+            xarray.open_zarr, it should now be provided in xarray_kwargs
+
+        """
+        super().__init__(**kwargs)
+        # For backward compatibility with the old onzarr driver
+        if storage_options is not None:
+            self.xarray_kwargs["storage_options"] = storage_options
+        if consolidated is not None:
+            self.xarray_kwargs["consolidated"] = consolidated
+
+    @property
+    def reader(self):
+        import xarray as xr
+        return xr.open_zarr
 
 
 class EnhancedZarrSource(ZarrSource):
@@ -113,14 +134,13 @@ class EnhancedZarrSource(ZarrSource):
         return enhance(ds, self.metadata)
 
 
-class NCDapSource(ZarrForecastSource, PatternMixin):
-
+class NCDapSource(ForecastSource, PatternMixin):
     name = "ncdap"
 
     def __init__(
         self,
         engine: str = "netcdf4",
-        chunks: Optional[dict] =None,
+        chunks: Optional[dict] = None,
         combine: Optional[str] = None,
         concat_dim: Optional[str] =None,
         path_as_pattern: bool = True,
@@ -162,14 +182,13 @@ class NCDapSource(ZarrForecastSource, PatternMixin):
             self.xarray_kwargs["combine"] = combine
         if concat_dim is not None:
             self.xarray_kwargs["concat_dim"] = concat_dim
-        # Storage options is no longer an option of open_dataset
-        if "storage_options" in self.xarray_kwargs:
-            kw = self.xarray_kwargs.pop("storage_options")
+        # Remove undesired kwargs
+        self.xarray_kwargs.pop("storage_options", None)
+        self.xarray_kwargs.pop("consolidated", None)
 
     @property
     def reader(self):
         import xarray as xr
-    
         if "*" in self._template or isinstance(self._template, list):
             if self.pattern:
                 self.xarray_kwargs["preprocess"] = self._add_path_to_ds
