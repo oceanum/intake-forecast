@@ -66,8 +66,8 @@ package-dir = {"" = "src"}
 [project.entry-points."intake.drivers"]
 "forecast" = "intake_forecast.source:ForecastSource"
 "zarr_forecast" = "intake_forecast.source:ZarrForecastSource"
+"ncdap_forecast" = "intake_forecast.source:NCDapSource"
 "zarr_enhanced" = "intake_forecast.source:EnhancedZarrSource"
-"ncdap_enhanced" = "intake_forecast.source:NCDapSource"
 "onzarr" = "intake_forecast.source:EnhancedZarrSource" # Support legacy onzarr
 "onncdap" = "intake_forecast.source:NCDapSource" # Support legacy onncdap
 
