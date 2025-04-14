@@ -18,6 +18,11 @@ TIME = datetime(2025, 4, 1, 0)
 TEST_ZARR_PATH = HERE / f"test_{TIME:%Y%m%dT%H}.zarr"
 
 
+@pytest.fixture(scope="module")
+def cat():
+    return intake.open_catalog(HERE / "catalog.yml")
+
+
 def create_test_zarr(path, date=TIME):
     """Create a test zarr store for testing."""
     times = [date + timedelta(days=i) for i in range(7)]
@@ -204,7 +209,7 @@ def test_zarr_forecast_source_with_zarr_options():
     source = ZarrForecastSource(
         urlpath=f"file:///{HERE}/test_%Y%m%dT%H.zarr",
         cycle=datetime(2025, 4, 1, 0),
-        open_zarr_kwargs={"consolidated": True},
+        xarray_kwargs={"consolidated": True},
     )
 
     ds = source.to_dask()
@@ -291,9 +296,8 @@ def test_enhanced_zarr_source_applied_units_conversion():
     assert ds["u10"].attrs["units"] == "kts"
 
 
-def test_catalog_cyclic_forecast():
+def test_catalog_cyclic_forecast(cat):
     """Test loading from catalog."""
-    cat = intake.open_catalog(HERE / "catalog.yml")
     dset = cat.test_cyclic_forecast(cycle="2025-04-01T00").to_dask()
     assert "u10" in dset.data_vars
     assert "v10" in dset.data_vars
@@ -301,9 +305,8 @@ def test_catalog_cyclic_forecast():
     assert "vgrd" in dset.data_vars
 
 
-def test_catalog_enhanced():
+def test_catalog_enhanced(cat):
     """Test loading from catalog."""
-    cat = intake.open_catalog(HERE / "catalog.yml")
     dset = cat.test_enhanced_zarr.to_dask()
     assert isinstance(dset, xr.Dataset)
     assert "ugrd" in dset.data_vars
@@ -328,9 +331,17 @@ def test_zarr_forecast_source_with_legacy_options():
         consolidated=True,
     )
     ds = source.to_dask()
-    assert source.open_zarr_kwargs["storage_options"] == {"token": None}
-    assert source.open_zarr_kwargs["consolidated"] is True
+    assert source.xarray_kwargs["storage_options"] == {"token": None}
+    assert source.xarray_kwargs["consolidated"] is True
     assert isinstance(ds, xr.Dataset)
+
+
+def test_ncdap(cat):
+    cycle = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    dset = cat["gfs_glob05"](cycle=cycle).to_dask()
+    assert "ugrd10m" in dset.data_vars
+    assert "vgrd10m" in dset.data_vars
+    assert "wndsp" in dset.data_vars
 
 
 def teardown_module(module):

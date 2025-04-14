@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 from datetime import datetime, timedelta
-from intake.source.base import DataSource
+from intake.source.base import DataSource, PatternMixin
 from intake_xarray.xzarr import ZarrSource
 from intake.catalog.utils import coerce_datetime
 
@@ -20,7 +20,7 @@ class ZarrForecastSource(DataSource):
         cycle: datetime,
         cycle_period: int = 6,
         maxstepback: int = 4,
-        open_zarr_kwargs: dict = {"storage_options": {"token": None}},
+        xarray_kwargs: dict = {"storage_options": {"token": None}},
         storage_options: Optional[dict] = None,
         consolidated: Optional[bool] = None,
         metadata: dict = None,
@@ -37,14 +37,14 @@ class ZarrForecastSource(DataSource):
             Cycle period in hours, it should be a positive factor of 24
         maxstepback : int
             Maximum number of cycles to step back when searching for past cycles
-        open_zarr_kwargs : dict
+        xarray_kwargs : dict
             Keyword arguments for opening zarr files with xarray.open_zarr
         storage_options : Optional[dict], deprecated
             Legacy parameter for storage options for opening zarr files with
-            xarray.open_zarr, it should now be provided in open_zarr_kwargs
+            xarray.open_zarr, it should now be provided in xarray_kwargs
         consolidated : Optional[bool], deprecated
             Legacy parameter for opening consolidated zarr files with
-            xarray.open_zarr, it should now be provided in open_zarr_kwargs
+            xarray.open_zarr, it should now be provided in xarray_kwargs
         metadata : dict
             Metadata for the dataset
 
@@ -53,21 +53,28 @@ class ZarrForecastSource(DataSource):
         self.cycle = find_previous_cycle_time(coerce_datetime(cycle), cycle_period)
         self.cycle_period = cycle_period
         self.maxstepback = maxstepback
-        self.open_zarr_kwargs = open_zarr_kwargs
+        self.xarray_kwargs = xarray_kwargs
         self._template = urlpath
         self._stepback = maxstepback
         # For backward compatibility with the old onzarr driver
         if storage_options is not None:
-            self.open_zarr_kwargs["storage_options"] = storage_options
+            self.xarray_kwargs["storage_options"] = storage_options
         if consolidated is not None:
-            self.open_zarr_kwargs["consolidated"] = consolidated
+            self.xarray_kwargs["consolidated"] = consolidated
+
+    @property
+    def kwargs(self):
+        return self.xarray_kwargs
+
+    @property
+    def reader(self):
+        import xarray as xr
+        return xr.open_zarr
 
     def to_dask(self):
-        import xarray as xr
-
         urlpath = self.cycle.strftime(self._template)
         try:
-            ds = xr.open_zarr(urlpath, **self.open_zarr_kwargs)
+            ds = self.reader(urlpath, **self.kwargs)
         except FileNotFoundError as err:
             if self._stepback == 0:
                 raise ValueError(
@@ -104,3 +111,73 @@ class EnhancedZarrSource(ZarrSource):
     def to_dask(self):
         ds = super().to_dask()
         return enhance(ds, self.metadata)
+
+
+class NCDapSource(ZarrForecastSource, PatternMixin):
+
+    name = "ncdap"
+
+    def __init__(
+        self,
+        engine: str = "netcdf4",
+        chunks: Optional[dict] =None,
+        combine: Optional[str] = None,
+        concat_dim: Optional[str] =None,
+        path_as_pattern: bool = True,
+        **kwargs
+    ):
+        """Open a opendap datasource with netcdf4 driver
+
+        Parameters
+        ----------
+        engine : str, optional
+            Engine to use for opening the dataset
+        chunks : int or dict, optional
+            Chunks is used to load the new dataset into dask
+            arrays. ``chunks={}`` loads the dataset with dask using a single
+            chunk for all arrays.
+        combine : ({'by_coords', 'nested'}, optional)
+            Which function is used to concatenate all the files when urlpath
+            has a wildcard. It is recommended to set this argument in all
+            your catalogs because the default has changed and is going to change.
+            It was "nested", and is now the default of xarray.open_mfdataset
+            which is "auto_combine", and is planed to change from "auto" to
+            "by_corrds" in a near future.
+        concat_dim : str, optional
+            Name of dimension along which to concatenate the files. Can
+            be new or pre-existing if combine is "nested". Must be None or new if
+            combine is "by_coords".
+        path_as_pattern : bool or str, optional
+            Whether to treat the path as a pattern (ie. ``data_{field}.nc``)
+            and create new coodinates in the output corresponding to pattern
+            fields. If str, is treated as pattern to match on. Default is True.
+
+        """
+        super().__init__(**kwargs)
+        self.path_as_pattern = path_as_pattern
+        self.xarray_kwargs["engine"] = engine
+        if chunks is not None:
+            self.xarray_kwargs["chunks"] = chunks
+        if combine is not None:
+            self.xarray_kwargs["combine"] = combine
+        if concat_dim is not None:
+            self.xarray_kwargs["concat_dim"] = concat_dim
+        # Storage options is no longer an option of open_dataset
+        if "storage_options" in self.xarray_kwargs:
+            kw = self.xarray_kwargs.pop("storage_options")
+
+    @property
+    def reader(self):
+        import xarray as xr
+    
+        if "*" in self._template or isinstance(self._template, list):
+            if self.pattern:
+                self.xarray_kwargs["preprocess"] = self._add_path_to_ds
+            return xr.open_mfdataset
+        return xr.open_dataset
+
+    def _add_path_to_ds(self, ds):
+        """Adding path info to a coord for a particular file"""
+        var = next(var for var in ds)
+        new_coords = reverse_format(self.pattern, ds[var].encoding["source"])
+        return ds.assign_coords(**new_coords)
