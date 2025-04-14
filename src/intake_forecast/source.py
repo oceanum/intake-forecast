@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 from datetime import datetime, timedelta
 from intake.source.base import DataSource, PatternMixin
+from intake.source.utils import reverse_format
 from intake_xarray.xzarr import ZarrSource
 from intake.catalog.utils import coerce_datetime
 
