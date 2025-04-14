@@ -56,6 +56,7 @@ class ForecastSource(DataSource):
     @property
     def reader(self):
         import xarray as xr
+
         return xr.open_dataset
 
     def to_dask(self):
@@ -87,7 +88,7 @@ class ZarrForecastSource(ForecastSource):
         self,
         storage_options: Optional[dict] = None,
         consolidated: Optional[bool] = None,
-        **kwargs
+        **kwargs,
     ):
         """Intake driver for cyclic zarr sources.
 
@@ -111,6 +112,7 @@ class ZarrForecastSource(ForecastSource):
     @property
     def reader(self):
         import xarray as xr
+
         return xr.open_zarr
 
 
@@ -142,9 +144,9 @@ class NCDapSource(ForecastSource, PatternMixin):
         engine: str = "netcdf4",
         chunks: Optional[dict] = None,
         combine: Optional[str] = None,
-        concat_dim: Optional[str] =None,
+        concat_dim: Optional[str] = None,
         path_as_pattern: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """Open a opendap datasource with netcdf4 driver
 
@@ -189,6 +191,7 @@ class NCDapSource(ForecastSource, PatternMixin):
     @property
     def reader(self):
         import xarray as xr
+
         if "*" in self._template or isinstance(self._template, list):
             if self.pattern:
                 self.xarray_kwargs["preprocess"] = self._add_path_to_ds

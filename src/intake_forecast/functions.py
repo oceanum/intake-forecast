@@ -12,7 +12,7 @@ def phase(dcomplex):
 
 
 def speed(u, v):
-    return np.sqrt(u ** 2 + v ** 2)
+    return np.sqrt(u**2 + v**2)
 
 
 def wspd_at_height(wspd, input_height, output_height=10.0):

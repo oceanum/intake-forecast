@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from pint import UnitRegistry
 
 
-
 logger = logging.getLogger(__name__)
 
 

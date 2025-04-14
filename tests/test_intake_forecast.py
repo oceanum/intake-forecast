@@ -154,9 +154,9 @@ def test_zarr_forecast_source_stepback():
 
     # The cycle should have stepped back by 6 hours (from 06:00 to 00:00)
     expected_cycle = datetime(2025, 4, 1, 0)
-    assert current_cycle == expected_cycle, (
-        f"Expected {expected_cycle}, got {current_cycle}"
-    )
+    assert (
+        current_cycle == expected_cycle
+    ), f"Expected {expected_cycle}, got {current_cycle}"
 
 
 def test_zarr_forecast_source_stepback_limit():
@@ -245,7 +245,7 @@ def test_enhanced_zarr_source_derived_variables():
                 dict(
                     name="spd",
                     input_variables=["u10", "v10"],
-                    function="intake_forecast.functions.speed"
+                    function="intake_forecast.functions.speed",
                 )
             ],
         ),
